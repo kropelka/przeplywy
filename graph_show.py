@@ -117,8 +117,8 @@ class SiecPrzeplywowa():
                             zerowe_wierzcholki.append(u)
                 for u in self.za[v]:
                     potwe[u] = potwe[u] - (self.cap[v,u] - self.flow[v, u])
-                    self.przed[u].delete(v)
-                    self.za[v].delete(u)
+                    self.przed[u].remove(v)
+                    self.za[v].remove(u)
                     if pot[u] !=0:
                         pot[u] = min(potwe[u], potwy[u])
                         if pot[u] ==0:
@@ -133,6 +133,7 @@ class SiecPrzeplywowa():
                         r = v
                 kolejka = deque()
                 kolejka.append(r)
+                ladunek[r] = p
                 debugj = 0
                 while True:
                     debugj +=1
