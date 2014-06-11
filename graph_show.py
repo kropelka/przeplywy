@@ -3,25 +3,47 @@ import wx
 from collections import deque
 __author__ = 'karoru'
 import time
-# import networkx as nx
-#import matplotlib.pyplot as plt
-#import matplotlib
+import networkx as nx
+import threading
+import Tkinter
+import matplotlib
+import matplotlib.backends.backend_tkagg
+import matplotlib.pyplot
 
-#from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-#from matplotlib.backends.backend_wx import NavigationToolbar2Wx
-#from matplotlib.figure import Figure
 
 #viewed_graph = nx.DiGraph()
 
 import numpy
 
+class Plotter():
+    def __init__(self,fig):
+        self.root = Tkinter.Tk()
+        self.root.state("zoomed")
+
+        self.fig = fig
+        t = threading.Thread(target=self.PlottingThread,args=(fig,))
+        t.start()
+
+    def PlottingThread(self,fig):
+        canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=self.root)
+        canvas.show()
+        canvas.get_tk_widget().pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=1)
+
+        toolbar = matplotlib.backends.backend_tkagg.NavigationToolbar2TkAgg(canvas, self.root)
+        toolbar.update()
+        canvas._tkcanvas.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, expand=1)
+        self.root.mainloop()
+
+
 class SiecPrzeplywowa():
     def __init__(self, wierzcholki):
+        self.Widok = nx.DiGraph()
         self.n = wierzcholki
         self.cap = numpy.zeros((wierzcholki, wierzcholki))
         self.flow = numpy.zeros((wierzcholki, wierzcholki))
         self.przed = []
         self.za = []
+        self.dist = [] # odległość wierzchołków od źródła w sieci rezydualnej
         self.wierzcholki = set()
         for i in range(wierzcholki):
             self.przed.append([])
@@ -53,31 +75,76 @@ class SiecPrzeplywowa():
                 print " "+ str(self.flow[i,j]) + " "
     def siec_rezydualna(self):
         res = SiecPrzeplywowa(self.n)
-        dist = [0]
         osiagniete_wierzcholki = deque()
         osiagniete_wierzcholki.appendleft(0)
         for i in range(1, self.n):
-            dist.append(sys.maxint)
+            res.dist.append(sys.maxint)
         while osiagniete_wierzcholki:
             u = osiagniete_wierzcholki.pop()
             for v in self.za[u]:
-                if(dist[u] < dist[v] and dist[v] <= dist[self.n-1] and self.cap[u,v] > self.flow[u,v]):
-                    if(dist[v]==sys.maxint):
+                if(res.dist[u] < res.dist[v] and res.dist[v] <= res.dist[self.n-1] and self.cap[u,v] > self.flow[u,v]):
+                    if(res.dist[v]==sys.maxint):
                         osiagniete_wierzcholki.appendleft(v)
-                    dist[v] = dist[u] + 1
+                    res.dist[v] = res.dist[u] + 1
                     res.dodaj_krawedz(u,v)
                     res.cap[u,v] = self.cap[u,v] - self.flow[u,v]
 
             for v in self.przed[u]:
-                if(dist[u] < dist[v] and dist[v] <= dist[self.n-1] and self.flow[v,u] > 0):
-                    if(dist[v]==sys.maxint):
+                if(res.dist[u] < res.dist[v] and res.dist[v] <= res.dist[self.n-1] and self.flow[v,u] > 0):
+                    if(res.dist[v]==sys.maxint):
                         osiagniete_wierzcholki.appendleft(v)
                     if res.cap[u,v]==0:
                         res.dodaj_krawedz(u,v)
                     res.cap[u,v] = res.cap[u,v] + self.flow[v,u]
 #            res.show_on_graph()
-        res.odleglosc = dist[self.n-1]
+        res.odleglosc = res.dist[self.n-1]
         return res
+
+    def mkm(self):
+        potwe = [0 for x in range(self.n)]
+        potwy = [0 for x in range(self.n)]
+        pot = [0 for x in range(self.n)]
+        Q = [0 for x in range(self.n)]
+        for v in self.wierzcholki: # wyznacz potencjaly wierzcholkow grafu
+            potwe[v] = 0
+            potwy[v] = 0
+            if v == 0:
+                potwe[v] = sys.maxint
+            else:
+                for u in self.przed[v]:
+                  potwe[v] = potwe[v] + self.cap[u,v]
+            if v == self.n-1:
+                potwy[v] = sys.maxint
+            else:
+                for u in self.za[v]:
+                    potwy[v] = potwy[v] + self.cap[v,u]
+            pot[v] = min(potwe[v], potwy[v])
+            Q[v] = 0
+        while len(self.wierzcholki) > 2: # dopoki w sieci rezydualnej sa krawedzie...
+            min = sys.maxint
+            vmin = 0
+            for v in self.wierzcholki:
+                if pot[v] < min:
+                    min = pot[v]
+                    vmin = v
+            Q[v] = min
+            for u in self.za[v]:
+                if Q[v]>0:
+                    Q[v] = Q[v] - self.cap[v,u]
+                    Q[u] = Q[u] + self.cap[v,u]
+                else:
+                    break
+            Q[v] = min
+            for u in self.przed[v]:
+                if Q[v]>0:
+                    Q[v] = Q[v] - self.cap[u,v]
+                    Q[u] = Q[u] - self.cap[v,u]
+
+
+
+
+
+
 
     def pseudomax(self):
         zerowe_wierzcholki = []
@@ -149,7 +216,7 @@ class SiecPrzeplywowa():
                     else:
                         i = 0
                         u = self.za[v][i]
-                        while ladunek[v]>0:
+                        while ladunek[v]>0 and u in self.za[v]:
                             if ladunek[u]==0:
                                 kolejka.appendleft(u)
                             delta = min(ladunek[v], self.cap[v,u] - self.flow[v,u])
@@ -159,9 +226,8 @@ class SiecPrzeplywowa():
                             if self.flow[v,u] == self.cap[v,u]:
                                 self.za[v].remove(u)
                                 self.przed[u].remove(v)
-                            if ladunek[v]>0:
-                                i = i+1
-                                u = self.za[v][i]
+                            if ladunek[v]==0:
+                                break
                     if v == self.n-1:
                         break
                 kolejka.clear()
@@ -169,6 +235,7 @@ class SiecPrzeplywowa():
                 ladunek[r] = p
                 while True:
                     v = kolejka.pop()
+                    i = self.za[v].__iter__()
                     if v != r:
                         potwe[v] -= ladunek[v]
                         potwy[v] -= ladunek[v]
@@ -178,21 +245,18 @@ class SiecPrzeplywowa():
                     if v==0:
                         ladunek[v]=0
                     else:
-                        i = 0
-                        u = self.przed[v][i]
-                        while ladunek[v]>0:
-                            if ladunek[u]==0:
-                                kolejka.appendleft(u)
-                            delta = min(ladunek[v], self.cap[u,v] - self.flow[u,v])
-                            self.flow[u,v] += delta
-                            ladunek[v] -= delta
-                            ladunek[u] += delta
-                            if self.flow[u,v] == self.cap[u,v]:
-                                self.przed[v].remove(u)
-                                self.za[u].remove(v)
-                            if ladunek[v] > 0:
-                                i += 1
-                                u = self.przed[v][i]
+                        while ladunek[v]>0 and u in self.przed[v]:
+                                if ladunek[u]==0:
+                                    kolejka.appendleft(u)
+                                delta = min(ladunek[v], self.cap[u,v] - self.flow[u,v])
+                                self.flow[u,v] += delta
+                                ladunek[v] -= delta
+                                ladunek[u] += delta
+                                if self.flow[u,v] == self.cap[u,v]:
+                                    self.przed[v].remove(u)
+                                    self.za[u].remove(v)
+                                if ladunek[v] ==0:
+                                    break
                     if v==0:
                         break
     def dinic(self):
@@ -245,7 +309,8 @@ class SiecPrzeplywowa():
 
 
 if __name__ == '__main__':
-    #matplotlib.use('WxAgg')
+    fig = matplotlib.pyplot.figure()
+    Plotter(fig)
     siec = SiecPrzeplywowa(7)
     siec.dodaj_krawedz(0,1)
     siec.dodaj_krawedz(1,6)
