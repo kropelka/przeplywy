@@ -30,9 +30,9 @@ class ViewableNetworkFlow(dinic.NetworkFlow):
                 if self.przeplyw == None:
                     etykiety[(u, v)] = str(self.c[u,v])
                 else:
-                    etykiety[(u, v)] = str(self.przeplyw[u,v]) + "/" + str(self.c[u,v])
+                    etykiety[(u, v)] = str(self.przeplyw[u,v]) + "/" + str(self.przeplyw[v,u]) + "/" + str(self.c[u,v])
                 g.add_edge(u, v)
-        print str(etykiety)
+#        print str(etykiety)
         if (reset_layout==True or not(self.layout)):
             self.layout = nx.spring_layout(g)
         nx.draw(g, pos=self.layout)
@@ -168,14 +168,16 @@ class UIHandler:
         v = app.builder.get_object("vertices_box").get_value_as_int()
         e = app.builder.get_object("edges_box").get_value_as_int()
         max_cap = app.builder.get_object("maxcap_box").get_value_as_int()
+        print str(v)+' '+str(e)
         choice_dialog.hide()
         if response == 1:
             current_network.wylosuj(v, e, max_cap)
 
     def onnextStepClicked(self, widget):
         dinic.do_next_step = True
+        current_network.show(False)
 
-    def onBigGraphTest(self, menupos):
+    def onTestButtonClicked(self, button):
         mode_dialog = app.builder.get_object("testing_dialog")
         response = mode_dialog.run()
         v = int(app.builder.get_object("test_vertices").get_text())
@@ -193,7 +195,6 @@ class UIHandler:
     def onToggleStepByStep(self, checkbox, data=None):
         if checkbox.get_active():
             dinic.step_by_step = True
-            print 'Wlaczono prace krokowa!'
         else:
             dinic.step_by_step = False
 
@@ -230,12 +231,11 @@ class DinicGTK:
         self.window = self.builder.get_object("main_window")
         self.window.connect("delete-event", UIHandler().onDeleteWindow)
         self.canvas = FigureCanvas(f)
-        self.canvas.set_size_request(1000, 800)
+        self.canvas.set_size_request(600, 400)
         self.builder.get_object("graphscreen").add_with_viewport(self.canvas)
         toolbar = NavigationToolbar(self.canvas, self.window)
         self.builder.get_object("toolbar_box").pack_start(toolbar, False, False, 0)
         self.textbuff = self.builder.get_object("algorithm_log")
-        print str(self.textbuff)
         glib.io_add_watch(sys.stdout, glib.IO_IN, self.update_textfield)
         self.window.show_all()
 

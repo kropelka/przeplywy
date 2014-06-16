@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = 'karoru'
 
 
@@ -26,15 +27,23 @@ class NetworkFlow:
 
 def losowy_graf(n, m, maks_cap):
     g = nx.gnm_random_graph(n, m)
-    graf = [[]]*n
+    graf = [ [] for x in range(0, n)]
+    print str(graf)
     c = zeros((n, n))
     for i in range(0, n):
         for j in range(0,n):
             if i < j: # gererujemy graf nieskierowany
                 c[i,j] = random.randint(0, maks_cap)
                 c[j,i] = c[i,j]
+    print str(g.edges())
     for (u,v) in g.edges():
-        graf[u].append(v)
+#        print 'Dodajemy wierzcholek'
+        (graf[u]).append(v)
+        graf[v].append(u)
+    print str(graf)
+#    for u in range(0,n):
+#        for v in graf[u]:
+#            print str(u) + ' -> '+ str(v)
     return (graf, c)
 
 step_by_step = False
@@ -51,17 +60,18 @@ def dinic(graf, c, s, t):
     przeplyw = zeros((n,n))
     while True:
         faza += 1
-#        print 'Faza dzialania algorytmu Dinica nr '+str(faza)
         kolejka.appendleft(s)
         dist = [-1]*n
         dist[s] = 0
         while kolejka:
             u = kolejka.pop()
             if step_by_step:
+                print 'Faza dzialania algorytmu Dinica nr '+str(faza)
+                print 'BFS na wierzcholku '+str(u)+', dist['+str(u)+'] = '+str(dist[u])
+                print 'Zawartosc kolejki: '+str(kolejka)
                 while not do_next_step:
                     time.sleep(0.001)
                 do_next_step = False
-#            print 'BFS na wierzcholku '+str(u)+', dist['+str(u)+'] = '+str(dist[u])
             for v in graf[u]:
                 if dist[v]==-1 and c[u,v] > przeplyw[u,v]: # jezeli wierzcholek nie jest nasycony i nie zostal jeszcze odwiedzony, to dodaj go do mozliwej sciezki
                     dist[v] = dist[u] + 1                  # blokujacej
@@ -70,16 +80,29 @@ def dinic(graf, c, s, t):
             return (calkowity_przeplyw, przeplyw)
         ograniczenie = sum([c[s,v] for v in graf[s]])
         calkowity_przeplyw += dinic_krok(graf, dist, c, przeplyw, s, t, ograniczenie) # przepychamy maksymalny mozliwy przeplyw ze zrodla przez sciezki blokujace
+    print u"Znaleziono maksymalny przepływ o wartości "+str(calkowity_przeplyw)
 
 def dinic_krok(graf, dist, c, przeplyw, u, t, limit):
+    global step_by_step
+    global do_next_step
     if limit <=0: # jak nie ma przeplywu do przepchniecia, to zakoncz
         return 0
     if u==t:  # jezeli dotarlismy do ujscia, to konczymy
         return limit
     val = 0
+    if step_by_step:
+        print 'Umieszczamy przeplyw '+str(limit)+' w sasiadach wierzcholka '+str(u)
+        while not do_next_step:
+            time.sleep(0.001)
+        do_next_step = False
     for v in graf[u]:
         res = c[u,v] - przeplyw[u,v]   # wyznaczamy wartosc rezydualna przeplywu na krawedzi (u,v)
         if dist[v] == dist[u] + 1 and res>0:  # idziemy do nastepnej krawedzi na sciezce blokujacej
+            if step_by_step:
+                print 'Krawedz '+str(u)+'-'+str(v)+' na sciezce blokujacej'
+                print 'Wywoluje dinic_krok dla s = '+str(v)+' i ograniczenia = '+str(min(limit-val, res))
+                while not do_next_step:
+                    time.sleep(0.001)
             av = dinic_krok(graf, dist, c, przeplyw, v, t, min(limit-val, res))  # rekurencyjnie umieszczamy tam reszte przeplywu
             przeplyw[u,v] += av
             przeplyw[v,u] -= av
