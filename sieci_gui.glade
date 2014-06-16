@@ -28,7 +28,26 @@
     <property name="can_focus">True</property>
     <property name="adjustment">adjustment3</property>
   </object>
+  <object class="GtkAdjustment" id="adjustment4">
+    <property name="lower">1</property>
+    <property name="upper">200</property>
+    <property name="value">50</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkTextBuffer" id="algorithm_log"/>
+  <object class="GtkTextView" id="algorithm_logview">
+    <property name="width_request">300</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="editable">False</property>
+    <property name="buffer">algorithm_log</property>
+  </object>
+  <object class="GtkLabel" id="label10">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="label" translatable="yes">Ilość wierzchołków sieci</property>
+  </object>
   <object class="GtkApplicationWindow" id="main_window">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Algorytm Dinica</property>
@@ -342,21 +361,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTextView" id="algorithm_logview">
-            <property name="width_request">300</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="editable">False</property>
-            <property name="buffer">algorithm_log</property>
-          </object>
-          <packing>
-            <property name="left_attach">3</property>
-            <property name="top_attach">1</property>
-            <property name="width">1</property>
-            <property name="height">3</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkScrolledWindow" id="graphscreen">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -375,9 +379,6 @@
             <property name="width">2</property>
             <property name="height">1</property>
           </packing>
-        </child>
-        <child>
-          <placeholder/>
         </child>
       </object>
     </child>
@@ -482,7 +483,7 @@
                     <property name="can_focus">True</property>
                     <property name="text" translatable="yes">200</property>
                     <property name="input_purpose">number</property>
-                    <property name="adjustment">adjustment1</property>
+                    <property name="adjustment">adjustment4</property>
                     <property name="numeric">True</property>
                   </object>
                   <packing>
@@ -567,11 +568,6 @@
       <action-widget response="1">gtk-ok</action-widget>
       <action-widget response="2">gtk-cancel</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkLabel" id="label10">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="label" translatable="yes">Ilość wierzchołków sieci</property>
   </object>
   <object class="GtkListStore" id="testmode_list">
     <columns>

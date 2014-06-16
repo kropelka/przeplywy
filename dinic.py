@@ -6,7 +6,7 @@ from numpy import zeros
 import networkx as nx
 import random
 import time
-
+import json
 
 class NetworkFlow:
     def __init__(self):
@@ -30,7 +30,7 @@ def losowy_graf(n, m, maks_cap):
     c = zeros((n, n))
     for i in range(0, n):
         for j in range(0,n):
-            if i < j:
+            if i < j: # gererujemy graf nieskierowany
                 c[i,j] = random.randint(0, maks_cap)
                 c[j,i] = c[i,j]
     for (u,v) in g.edges():
@@ -61,26 +61,26 @@ def dinic(graf, c, s, t):
                 while not do_next_step:
                     time.sleep(0.001)
                 do_next_step = False
-            print 'BFS na wierzcholku '+str(u)+', dist['+str(u)+'] = '+str(dist[u])
+#            print 'BFS na wierzcholku '+str(u)+', dist['+str(u)+'] = '+str(dist[u])
             for v in graf[u]:
-                if dist[v]==-1 and c[u,v] > przeplyw[u,v]:
-                    dist[v] = dist[u] + 1
+                if dist[v]==-1 and c[u,v] > przeplyw[u,v]: # jezeli wierzcholek nie jest nasycony i nie zostal jeszcze odwiedzony, to dodaj go do mozliwej sciezki
+                    dist[v] = dist[u] + 1                  # blokujacej
                     kolejka.appendleft(v)
-        if dist[t]==-1:
+        if dist[t]==-1: # jezeli nie ma sciezki blokujacej od s do t, to zakoncz
             return (calkowity_przeplyw, przeplyw)
         ograniczenie = sum([c[s,v] for v in graf[s]])
-        calkowity_przeplyw += dinic_krok(graf, dist, c, przeplyw, s, t, ograniczenie)
+        calkowity_przeplyw += dinic_krok(graf, dist, c, przeplyw, s, t, ograniczenie) # przepychamy maksymalny mozliwy przeplyw ze zrodla przez sciezki blokujace
 
 def dinic_krok(graf, dist, c, przeplyw, u, t, limit):
-    if limit <=0:
+    if limit <=0: # jak nie ma przeplywu do przepchniecia, to zakoncz
         return 0
-    if u==t:
+    if u==t:  # jezeli dotarlismy do ujscia, to konczymy
         return limit
     val = 0
     for v in graf[u]:
-        res = c[u,v] - przeplyw[u,v]
-        if dist[v] == dist[u] + 1 and res>0:
-            av = dinic_krok(graf, dist, c, przeplyw, v, t, min(limit -val, res))
+        res = c[u,v] - przeplyw[u,v]   # wyznaczamy wartosc rezydualna przeplywu na krawedzi (u,v)
+        if dist[v] == dist[u] + 1 and res>0:  # idziemy do nastepnej krawedzi na sciezce blokujacej
+            av = dinic_krok(graf, dist, c, przeplyw, v, t, min(limit-val, res))  # rekurencyjnie umieszczamy tam reszte przeplywu
             przeplyw[u,v] += av
             przeplyw[v,u] -= av
             val += av
@@ -99,3 +99,10 @@ def randomizowana_proba_dinica(n, m, liczba_prob, maks_cap):
         timer = time.clock() - timer
         calk_czas += timer
     return calk_czas/liczba_prob
+
+def open_graph_file(file_name, g, c):
+    plik = open(file_name, 'r')
+    s = plik.readline()
+    liczba_wierzcholkow = int(s)
+    for line in plik:
+        print 'hello'
