@@ -119,7 +119,7 @@ class GraphTesting:
             progress_bar.pulse()
             while Gtk.events_pending():
                 Gtk.main_iteration()
-        self.stat_show(t, results, results_by_t2, r'$T(|V|)$ przy $|E| = O(|V|)$', r'$T(|V|)/|V|$', r'$|V|$')
+        self.stat_show(t, results, results_by_t2, r'$T(|V|)$ przy $|E| = O(|V|)$', r'$T(|V|)/|V|^2$', r'$|V|$')
 
     def many_edges(self, n, maks_cap, tries):
         progress_bar = app.builder.get_object("test_progress")
@@ -137,7 +137,7 @@ class GraphTesting:
             progress_bar.pulse()
             while Gtk.events_pending():
                 Gtk.main_iteration()
-        self.stat_show(t, results, results_by_t3, r'$T(|V|)$ przy $|E| = \Omega(|V|^2)$', r'$T(|V|)/|V|$', r'$|V|$')
+        self.stat_show(t, results, results_by_t3, r'$T(|V|)$ przy $|E| = \Omega(|V|^2)$', r'$T(|V|)/|V|^3$', r'$|V|$')
 
 
 class UIHandler:
