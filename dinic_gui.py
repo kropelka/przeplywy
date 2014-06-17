@@ -3,6 +3,7 @@ __author__ = 'karoru'
 import sys
 import math
 from gi.repository import Gtk
+Gtk.threads_init()
 import dinic
 import networkx as nx
 from matplotlib import use as mpluse
@@ -15,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy
 import thread
 import glib
+from gi.repository import Gdk
 f = plt.figure()
 
 class ViewableNetworkFlow(dinic.NetworkFlow):
@@ -214,15 +216,6 @@ class UIHandler:
 
 
 class DinicGTK:
-    def update_textfield(self, stream, cond):
-        print "Dupa"
-        if cond == glib.IO_IN:
-            char = stream.read(1)
-            self.textbuff.insert_at_cursor(char)
-            return True
-        else:
-            return False
-
     def __init__(self):
         self.gladefile = "sieci_gui.glade"
         self.builder = Gtk.Builder()
@@ -231,12 +224,11 @@ class DinicGTK:
         self.window = self.builder.get_object("main_window")
         self.window.connect("delete-event", UIHandler().onDeleteWindow)
         self.canvas = FigureCanvas(f)
-        self.canvas.set_size_request(600, 400)
+        self.canvas.set_size_request(Gdk.Screen.get_default().get_width()*0.7, Gdk.Screen.get_default().get_height()*0.7)
         self.builder.get_object("graphscreen").add_with_viewport(self.canvas)
         toolbar = NavigationToolbar(self.canvas, self.window)
         self.builder.get_object("toolbar_box").pack_start(toolbar, False, False, 0)
         self.textbuff = self.builder.get_object("algorithm_log")
-        glib.io_add_watch(sys.stdout, glib.IO_IN, self.update_textfield)
         self.window.show_all()
 
 #        self.window = self.wTree.get_widget("main_window")
